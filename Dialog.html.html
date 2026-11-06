@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons1.css">
+    <style>
+      /* リセットと基本設定 */
+      body { 
+        padding: 20px; 
+        font-family: "Hiragino Kaku Gothic ProN", sans-serif; 
+        font-size: 14px; 
+        background-color: #ffffff; /* 完全な白背景 */
+        color: #333;
+        margin: 0;
+      }
+      
+      /* グループコンテナ（枠線をシンプルに） */
+      .group { 
+        margin-bottom: 20px;
+      }
+      
+      /* ラベルスタイル */
+      label { 
+        font-weight: bold; 
+        display: block; 
+        margin-bottom: 8px; 
+        font-size: 14px;
+        color: #222;
+      }
+      
+      /* 横並び配置 */
+      .row { 
+        display: flex; 
+        gap: 10px; 
+        align-items: center; 
+      }
+      
+      /* セレクトボックス（シンプル化） */
+      select { 
+        flex: 1; 
+        padding: 8px; 
+        font-size: 15px; 
+        border: 1px solid #ccc; 
+        border-radius: 4px; 
+        background: #fff;
+        height: 40px;
+      }
+      
+      /* 矢印（色を薄く） */
+      .arrow { 
+        text-align: center; 
+        color: #999; 
+        font-size: 20px; 
+        margin: 10px 0;
+      }
+      
+      /* ボタンエリア */
+      .buttons { 
+        margin-top: 30px; 
+        text-align: right; 
+        display: flex; 
+        justify-content: flex-end; 
+        gap: 10px; 
+      }
+      
+      /* ボタン共通 */
+      button { 
+        cursor: pointer; 
+        height: 40px; 
+        padding: 0 25px; 
+        font-weight: bold; 
+        border-radius: 4px; 
+        font-size: 14px;
+      }
+      
+      /* 実行ボタン */
+      button.action { 
+        background: #1a73e8; /* Google Blue */
+        color: white; 
+        border: none; 
+      }
+      button.action:hover { background: #1557b0; }
+      
+      /* 閉じるボタン */
+      button.cancel { 
+        background: white; 
+        border: 1px solid #ddd; 
+        color: #555; 
+      }
+      button.cancel:hover { background: #f1f1f1; }
+      
+      /* ステータス表示エリア（シンプルに） */
+      #status { 
+        margin-top: 20px; 
+        color: #444; 
+        font-size: 12px; 
+        white-space: pre-wrap; 
+        border-top: 1px solid #eee; 
+        padding-top: 10px;
+        line-height: 1.5;
+        max-height: 100px; 
+        overflow-y: auto; 
+      }
+    </style>
+  </head>
+  <body>
+    <form id="updateForm" onsubmit="handleFormSubmit(this)">
+      <input type="hidden" name="mode" value="<?= mode ?>">
+      
+      <div class="group">
+        <label>開始年月</label>
+        <div class="row">
+          <select name="startYear">
+            <? years.forEach(y => { ?>
+              <option value="<?= y ?>" <?= y === defaultStart.year ? 'selected' : '' ?>><?= y ?>年</option>
+            <? }) ?>
+          </select>
+          <select name="startMonth">
+            <? [4,5,6,7,8,9,10,11,12,1,2,3].forEach(m => { ?>
+              <option value="<?= m ?>" <?= m === defaultStart.month ? 'selected' : '' ?>><?= m ?>月</option>
+            <? }) ?>
+          </select>
+        </div>
+      </div>
+
+      <div class="arrow">⬇</div>
+
+      <div class="group">
+        <label>終了年月</label>
+        <div class="row">
+          <select name="endYear">
+            <? years.forEach(y => { ?>
+              <option value="<?= y ?>" <?= y === defaultEnd.year ? 'selected' : '' ?>><?= y ?>年</option>
+            <? }) ?>
+          </select>
+          <select name="endMonth">
+            <? [4,5,6,7,8,9,10,11,12,1,2,3].forEach(m => { ?>
+              <option value="<?= m ?>" <?= m === defaultEnd.month ? 'selected' : '' ?>><?= m ?>月</option>
+            <? }) ?>
+          </select>
+        </div>
+      </div>
+
+      <div class="buttons">
+        <button class="cancel" type="button" onclick="google.script.host.close()">閉じる</button>
+        <button class="action" type="submit" id="submitBtn">一括集計実行</button>
+      </div>
+    </form>
+    
+    <div id="status"></div>
+
+    <script>
+      function handleFormSubmit(formObject) {
+        event.preventDefault();
+        const btn = document.getElementById('submitBtn');
+        const status = document.getElementById('status');
+        
+        btn.disabled = true;
+        btn.textContent = '実行中...';
+        status.textContent = '集計を開始します...\n';
+        status.style.color = '#1a73e8';
+
+        google.script.run
+          .withSuccessHandler(function(result) {
+            status.textContent = result;
+            status.style.color = '#2e7d32'; // Success Green
+            btn.textContent = '完了';
+            btn.disabled = false;
+          })
+          .withFailureHandler(function(error) {
+            status.textContent += '\nエラー発生: ' + error.message;
+            status.style.color = '#d32f2f'; // Error Red
+            btn.disabled = false;
+            btn.textContent = '一括集計実行';
+          })
+          .processBatchUpdate(formObject);
+      }
+    </script>
+  </body>
+</html>

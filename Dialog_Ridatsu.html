@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons1.css">
+    <style>
+      * { box-sizing: border-box; }
+      body { 
+        padding: 30px; 
+        font-family: "Hiragino Kaku Gothic ProN", sans-serif; 
+        font-size: 22px; 
+        background-color: #f5f7f9;
+        margin: 0;
+        overflow: hidden;
+      }
+      .group { 
+        background: white; 
+        padding: 30px; 
+        border-radius: 12px; 
+        border: 1px solid #d1d9e0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        margin-bottom: 25px;
+      }
+      label { 
+        font-weight: bold; 
+        display: block; 
+        margin-bottom: 20px; 
+        color: #333;
+        font-size: 26px;
+      }
+      select { 
+        width: 100%; 
+        padding: 15px; 
+        font-size: 24px; 
+        border-radius: 8px;
+        border: 2px solid #ccc;
+        height: 60px;
+      }
+      .buttons { 
+        margin-top: 30px; 
+        text-align: right; 
+        display: flex;
+        justify-content: flex-end;
+        gap: 15px;
+      }
+      button {
+        padding: 0 35px !important;
+        height: 65px !important;
+        font-size: 22px !important;
+        border-radius: 10px !important;
+        cursor: pointer;
+      }
+      button.action {
+        background-color: #0056b3 !important;
+        color: white !important;
+        font-weight: bold;
+      }
+      #status { 
+        margin-top: 20px; 
+        color: #555; 
+        font-size: 18px; 
+        white-space: pre-wrap; 
+        height: 120px; 
+        overflow-y: auto; 
+        border-top: 2px solid #ddd; 
+        padding-top: 15px;
+      }
+    </style>
+  </head>
+  <body>
+    <form id="ridatsuForm" onsubmit="handleRidatsuSubmit(this)">
+      <div class="group">
+        <label>対象年度（令和）</label>
+        <select name="targetYear">
+          <? 
+            validYears.forEach(year => { 
+              let r = year - 2018; // 令和換算
+              let sel = (year === defaultYear) ? 'selected' : '';
+          ?>
+            <option value="<?= year ?>" <?= sel ?>>
+              令和<?= r ?>年度 (<?= year ?>)
+            </option>
+          <? }) ?>
+        </select>
+      </div>
+
+      <div class="buttons">
+        <button type="button" onclick="google.script.host.close()">閉じる</button>
+        <button class="action" type="submit" id="submitBtn">分析実行</button>
+      </div>
+    </form>
+    
+    <div id="status"></div>
+
+    <script>
+      function handleRidatsuSubmit(formObject) {
+        event.preventDefault();
+        const btn = document.getElementById('submitBtn');
+        const status = document.getElementById('status');
+        
+        btn.disabled = true;
+        btn.textContent = '分析中...';
+        status.textContent = '【実行中】分析を開始しました...\n';
+        status.style.color = '#0056b3';
+
+        google.script.run
+          .withSuccessHandler(function(result) {
+            status.textContent = result;
+            status.style.color = '#2e7d32';
+            btn.textContent = '完了';
+            btn.disabled = false;
+          })
+          .withFailureHandler(function(error) {
+            status.textContent = 'エラー発生: ' + error.message;
+            status.style.color = 'red';
+            btn.disabled = false;
+            btn.textContent = '分析実行';
+          })
+          .processRidatsuUpdate(formObject);
+      }
+    </script>
+  </body>
+</html>
